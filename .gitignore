@@ -1,9 +1,16 @@
-git_token.txt
-
 venv/
-.venv/
-
 __pycache__/
 *.pyc
 
+# Local credentials & tests
+git_token.txt
 tests/
+
+# Build artifacts & data
+build/
+bin/
+data/
+results/
+*.png
+*.npy
+EOF
