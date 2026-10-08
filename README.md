@@ -134,7 +134,7 @@ Recorded execution times for the GPU-accelerated backprojection kernel running o
 
 ## Performance Conclusion
 
-![Benchmark Comparison](results/benchmark_comparison.png)
+![Benchmark Comparison](assets/benchmark_comparison.png)
 
 The data presented in demonstrates that GPU acceleration via CUDA provides a massive, multi-order-of-magnitude performance advantage over sequential CPU implementations for the FBP backprojection algorithm. 
 
