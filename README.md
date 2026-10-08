@@ -93,3 +93,49 @@ Recorded execution times for the purely sequential C++ CPU backprojection benchm
 | **128x128** | 9.02 ms | ~3.1x |
 | **256x256** | 21.49 ms | ~4.9x |
 | **512x512** | 72.73 ms | ~6.8x |
+
+## CUDA Implementation
+
+The CUDA implementation (`src/cuda/fbp_parallel.cu`) completely eliminates the explicit nested spatial loops used in the sequential C++ baseline by mapping every individual physical pixel directly to a unique GPU thread. This massive parallelization is further accelerated by utilizing fast-math hardware intrinsics (`__cosf`, `__sinf`) on the Streaming Multiprocessors. Efficient device memory management (`cudaMalloc`, `cudaMemcpy`, `cudaFree`) is used to precisely reserve and release VRAM, isolating the backprojection kernel from host memory bottlenecks.
+
+### Compilation
+
+We use CMake to configure the build system and compile the executables. Ensure your `CMakeLists.txt` is configured for your specific target architecture (e.g., `sm_50` for the GTX 750 Ti) and includes the CUDA language declaration.
+
+```bash
+# Clean previous build files and compile
+mkdir -p build
+cd build
+rm -rf *
+cmake ..
+make
+```
+
+### Execution
+
+After compiling, run the CUDA executable from the repository root for each target benchmark size. The program accepts the image dimension and the number of projection angles as arguments:
+
+```bash
+cd ..
+./build/fbp_parallel_cuda 128 180
+./build/fbp_parallel_cuda 256 180
+./build/fbp_parallel_cuda 512 180
+```
+
+### Reference Benchmarks
+
+Recorded execution times for the GPU-accelerated backprojection kernel running on an NVIDIA GTX 750 Ti:
+
+| Resolution | CUDA Backprojection | Speedup vs C++ | Speedup vs Python |
+| :--- | :--- | :--- | :--- |
+| **128x128** | 0.21 ms | ~43x | ~135x |
+| **256x256** | 0.58 ms | ~37x | ~182x |
+| **512x512** | 2.03 ms | ~35x | ~242x |
+
+## Performance Conclusion
+
+![Benchmark Comparison](results/benchmark_comparison.png)
+
+The data presented in demonstrates that GPU acceleration via CUDA provides a massive, multi-order-of-magnitude performance advantage over sequential CPU implementations for the FBP backprojection algorithm. 
+
+As the image resolution scales to 512x512, the execution times for the sequential spatial loops scale drastically, with the Python baseline maxing out at 493.06 ms. The compiled C++ implementation significantly improves upon the baseline across all resolutions, reducing the 512x512 execution time to 72.73 ms. Ultimately, by mapping individual pixels directly to concurrent GPU threads, the CUDA implementation flattens the computational scaling curve, completing the 512x512 reconstruction in just 2.03 ms. This represents an approximate 242x speedup over Python and a 35x speedup over compiled C++.
