@@ -40,40 +40,9 @@ $$f(x, y) \approx \frac{\pi}{N_\theta} \sum_{k=0}^{N_\theta - 1} g(x \cos\theta_
 
 This mathematical summation directly dictates the architectural mechanics of our Python, C++, and CUDA codebases. The primary loops iterate over each discrete projection angle, physically executing the $\Sigma$ (Sigma) accumulation by adding the newly interpolated projection values to the pixel's running total using the `+=` operator. Once all angles are accumulated, the final output matrix is multiplied by the $\Delta\theta$ scale factor (e.g., `d_theta = np.pi / num_angles`) to accurately finalize the continuous integral approximation.
 
-```
-// Initialization
-reconstruction_grid = 2D_Array(size, size, default=0.0)
-d_theta = PI / num_angles
-
-// Iterate over all sampled projection angles
-FOR i = 0 TO num_angles - 1:
-    theta = angles[i]
-    
-    // Iterate over every spatial pixel 
-    // (Note: These spatial loops are flattened into concurrent threads in the "CUDA-CT-Reconstruction" file)
-    FOR y = 0 TO size - 1:
-        FOR x = 0 TO size - 1:
-            
-            // Map the physical pixel to a continuous 1D detector intersection
-            t = (x * cos(theta)) + (y * sin(theta)) + det_center
-            
-            // Isolate adjacent discrete bins for linear interpolation
-            t0 = floor(t)
-            t1 = t0 + 1
-            
-            // Calculate fractional interpolation weights
-            wt1 = t - t0
-            wt0 = 1.0 - wt1
-            
-            // The Sigma Accumulation
-            IF t0 >= 0 AND t1 < num_detectors:
-                reconstruction_grid[y][x] += (sinogram[i][t0] * wt0) + (sinogram[i][t1] * wt1)
-
-// Final delta theta scaling to approximate continuous integration
-FOR y = 0 TO size - 1:
-    FOR x = 0 TO size - 1:
-        reconstruction_grid[y][x] = reconstruction_grid[y][x] * d_theta
-```
+<p align="center">
+  <img src="assets/FBP_Algorithm1.png" alt="FBP Parallel Beam Algorithm">
+</p>
 
 ## Python Baseline
 
@@ -193,7 +162,9 @@ Recorded execution times for the GPU-accelerated backprojection kernel running o
 
 ## Performance Conclusion
 
-![Benchmark Comparison](assets/benchmark_comparison.png)
+<p align="center">
+  <img src="assets/benchmark_comparison.png" alt="Benchmark Comparison Bar Plot">
+</p>
 
 The data presented in demonstrates that GPU acceleration via CUDA provides a massive, multi-order-of-magnitude performance advantage over sequential CPU implementations for the FBP backprojection algorithm. 
 

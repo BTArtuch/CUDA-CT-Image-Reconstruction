@@ -11,6 +11,5 @@ build/
 bin/
 data/
 results/
-*.png
 *.npy
 EOF
