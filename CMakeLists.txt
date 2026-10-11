@@ -20,3 +20,7 @@ add_executable(fbp_parallel_cpp src/cpp/fbp_parallel.cpp)
 add_executable(fbp_parallel_cuda src/cuda/fbp_parallel.cu)
 # Ensure nvcc compiles with high optimization and fast-math intrinsics
 target_compile_options(fbp_parallel_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --use_fast_math>)
+
+# CUDA Fan Beam Target
+add_executable(fbp_fanbeam_cuda src/cuda/fbp_fanbeam.cu)
+target_compile_options(fbp_fanbeam_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --use_fast_math>)
