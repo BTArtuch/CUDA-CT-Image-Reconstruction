@@ -24,3 +24,7 @@ target_compile_options(fbp_parallel_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 
 # CUDA Fan Beam Target
 add_executable(fbp_fanbeam_cuda src/cuda/fbp_fanbeam.cu)
 target_compile_options(fbp_fanbeam_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --use_fast_math>)
+
+# CUDA Cone Beam Target
+add_executable(fbp_conebeam_cuda src/cuda/fbp_conebeam.cu)
+target_compile_options(fbp_conebeam_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 --use_fast_math>)

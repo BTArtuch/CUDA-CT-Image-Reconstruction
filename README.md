@@ -76,6 +76,11 @@ When executed, the script automatically sweeps through three benchmark resolutio
 *   **Visualization Export:** Saves diagnostic visual confirmation plots (e.g., `python_baseline_512x512.png`) to the `results/` directory.
 *   **Binary Data Export:** Saves the raw phantom, the projection angles, and the filtered sinogram as `.bin` files into the `data/` directory.
 
+### Phantom Ground Truth, Resulting Sinogram, and Result
+<p align="center">
+  <img src="assets/python_baseline_512x512.png" alt="FBP Parallel Beam Algorithm">
+</p>
+
 ### Reference Benchmarks
 
 Recorded execution times for the pure Python CPU benchmark:
@@ -170,6 +175,26 @@ The data presented in demonstrates that GPU acceleration via CUDA provides a mas
 
 As the image resolution scales to 512x512, the execution times for the sequential spatial loops scale drastically, with the Python baseline maxing out at 493.06 ms. The compiled C++ implementation significantly improves upon the baseline across all resolutions, reducing the 512x512 execution time to 72.73 ms. Ultimately, by mapping individual pixels directly to concurrent GPU threads, the CUDA implementation flattens the computational scaling curve, completing the 512x512 reconstruction in just 2.03 ms. This represents an approximate 242x speedup over Python and a 35x speedup over compiled C++.
 
+## Advanced Geometries: Divergent Fan-Beam
+
+While parallel-beam geometry provides the mathematical foundation, modern 3rd-generation CT scanners utilize a divergent **fan-beam** geometry emitted from a single point source. This physical divergence introduces significant computational complexity to the backprojection algorithm.
+
+### Fan-Beam Mathematics & Weighting
+Because the X-rays flare out from a point, individual rays are defined by their divergent detector angle $\gamma$ rather than a linear distance. This requires two critical mathematical corrections to prevent severe image warping (cupping artifacts):
+1.  **Pre-Weighted Filtering ($D \cos\gamma$):** Before ramp filtering, the raw detector readings are scaled by the cosine of their divergent angle to mathematically compensate for the varying distances traveled by the flared outer rays.
+2.  **Inverse-Square Distance Weighting ($1/L^2$):** During backprojection, the physical intensity of the divergent beam drops off as it spreads. Every CUDA thread must calculate the exact physical distance ($L$) from the X-ray point source to its assigned spatial pixel $(x, y)$, applying a $1/L^2$ multiplier to the interpolated density before accumulating it into the running total.
+
+### Execution & Benchmarks
+The Python generator handles the pre-weighted inner integral, while the CUDA kernel isolates and executes the computationally heavy $1/L^2$ distance-weighted outer integral over a full 360-degree rotation.
+
+*Recorded execution times for the Fan-Beam GPU-accelerated kernel (360 projection angles):*
+
+| Resolution | Fan-Beam CUDA Backprojection | RMSE | 
+| :--- | :--- | :--- | 
+| **128x128** | 1.186 ms | 0.20044 | 
+| **256x256** | 4.23083 ms | 0.22065 | 
+| **512x512** | 16.3751 ms | 0.23282 | 
+
 ## References
 
 Bushberg, J. T., Seibert, J. A., Leidholdt, E. M., & Boone, J. M. (2002). *The essential physics of medical imaging* (2nd ed.). Lippincott Williams & Wilkins.
@@ -177,3 +202,5 @@ Bushberg, J. T., Seibert, J. A., Leidholdt, E. M., & Boone, J. M. (2002). *The e
 Hsieh, J. (2009). *Computed tomography: Principles, design, artifacts, and recent advances* (2nd ed.). SPIE Press/Wiley Interscience.
 
 Kirk, D. B., & Hwu, W. M. W. (2022). *Programming massively parallel processors: A hands-on approach* (4th ed.). Morgan Kaufmann.
+
+Shaw, C.C. (Ed.). (2014). Cone Beam Computed Tomography (1st ed.). CRC Press. https://doi-org.proxy1.library.jhu.edu/10.1201/b16465
